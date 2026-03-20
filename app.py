@@ -13,7 +13,8 @@ st.set_page_config(page_title="Creator Studio", page_icon="🎬", layout="wide")
 # Securely load the API key from Streamlit's Secret vault
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # Changed from gemini-1.5-flash to gemini-pro to fix the NotFound error
+    model = genai.GenerativeModel('gemini-pro') 
     ai_ready = True
 except Exception as e:
     ai_ready = False
@@ -125,8 +126,11 @@ with tab1:
                 2. Visual action (what I should be doing on screen)
                 Format it clearly with bullet points. Do not include introductory text, just give the 3 concepts.
                 """
-                response = model.generate_content(prompt)
-                st.markdown(response.text)
+                try:
+                    response = model.generate_content(prompt)
+                    st.markdown(response.text)
+                except Exception as e:
+                    st.error(f"Something went wrong with the AI: {e}")
 
 # --- TAB 2: PRE-POST ANALYZER ---
 with tab2:
