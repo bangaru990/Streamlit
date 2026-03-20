@@ -12,9 +12,7 @@ st.set_page_config(page_title="Creator Studio", page_icon="🎬", layout="wide")
 PROFILES_FILE = "profiles.json"
 
 def load_profiles():
-    """Loads profiles from a local JSON file. Creates defaults if missing."""
     if not os.path.exists(PROFILES_FILE):
-        # Default profiles for your two accounts
         default_profiles = {
             "@bangarugn": {
                 "niche": "Tech & Coding", 
@@ -33,27 +31,22 @@ def load_profiles():
         return json.load(f)
 
 def save_profiles(profiles_data):
-    """Saves the updated profiles back to the JSON file."""
     with open(PROFILES_FILE, "w") as f:
         json.dump(profiles_data, f, indent=4)
 
-# Load your profiles into the app
 profiles = load_profiles()
 
 # --- PROFILE SETTINGS (SIDEBAR) ---
 st.sidebar.header("👤 Profile Manager")
 st.sidebar.write("Switch between your creator accounts.")
 
-# Dropdown to select the active profile
 profile_handles = list(profiles.keys())
 selected_handle = st.sidebar.selectbox("Active Profile", profile_handles)
 
-# Display inputs loaded with the selected profile's data
 st.sidebar.subheader("Edit Profile Info")
 my_niche = st.sidebar.text_input("My Niche", value=profiles[selected_handle]["niche"])
 target_audience = st.sidebar.text_input("Target Audience", value=profiles[selected_handle]["target_audience"])
 
-# Save button to update the JSON file if you change the niche/audience
 if st.sidebar.button("Save Changes"):
     profiles[selected_handle]["niche"] = my_niche
     profiles[selected_handle]["target_audience"] = target_audience
@@ -65,7 +58,6 @@ st.sidebar.success(f"Currently analyzing for: {selected_handle} 🟢")
 
 # --- HELPER FUNCTIONS ---
 def extract_frames(video_path, num_frames=4):
-    """Extracts evenly spaced frames from a video."""
     cam = cv2.VideoCapture(video_path)
     frames = []
     total_frames = int(cam.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -89,15 +81,13 @@ def extract_frames(video_path, num_frames=4):
 # --- MAIN APP LAYOUT ---
 st.title("🎬 Viral Content Studio")
 
-# Create the tabs
 tab1, tab2, tab3 = st.tabs(["🏠 My Dashboard", "🔍 Pre-Post Analyzer", "📉 Post-Mortem"])
 
-# --- TAB 1: THE PERSONALIZED DASHBOARD ---
+# --- TAB 1: DASHBOARD ---
 with tab1:
     st.header(f"Welcome back, {selected_handle}!")
     st.write(f"**Focusing on:** {my_niche} | **Targeting:** {target_audience}")
     
-    # Dashboard Metrics
     st.subheader("📊 Quick Stats (Simulated)")
     col1, col2, col3 = st.columns(3)
     col1.metric(label="Followers Goal", value="10,000", delta="In Progress")
@@ -106,7 +96,6 @@ with tab1:
     
     st.divider()
     
-    # Personalized Recommendations
     st.subheader(f"💡 Today's Recommendations for {selected_handle}")
     st.write("Based on current platform trends, here are 3 concepts to film today:")
     
@@ -118,3 +107,39 @@ with tab1:
     
     st.warning(f"""**Concept 3: The Tool Reveal**
 'This free tool feels illegal to know for {target_audience}.'""")
+
+# --- TAB 2: PRE-POST ANALYZER ---
+with tab2:
+    st.header("Draft Analyzer")
+    st.write("Upload a draft video to get a harsh AI critique before publishing.")
+    
+    uploaded_file = st.file_uploader("Upload your .mp4 draft", type=["mp4", "mov"])
+    
+    if uploaded_file is not None:
+        st.video(uploaded_file)
+        if st.button("Analyze Visuals"):
+            with st.spinner("Extracting frames..."):
+                tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+                tfile.write(uploaded_file.read())
+                
+                extracted_frames = extract_frames(tfile.name, num_frames=4)
+                
+                cols = st.columns(4)
+                for i, frame in enumerate(extracted_frames):
+                    with cols[i]:
+                        st.image(frame, use_container_width=True, caption=f"Frame {i+1}")
+                os.remove(tfile.name)
+                
+                st.subheader("AI Verdict")
+                st.markdown(f"🚨 **Analysis tailored for {target_audience}:** The pacing here is a bit slow. Your audience wants fast value. Add a text pop-up in Frame 2.")
+
+# --- TAB 3: POST-MORTEM ---
+with tab3:
+    st.header("Post-Mortem Analyzer")
+    st.write("Paste a failed Reel URL to find out why the algorithm ignored it.")
+    url = st.text_input("Video URL:")
+    if st.button("Analyze Failure"):
+        if url:
+            st.info(f"Downloading `{url}`... (Integration coming soon!)")
+        else:
+            st.warning("Please enter a URL.")
